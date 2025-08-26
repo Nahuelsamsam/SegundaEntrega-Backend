@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "status": true,
+    "title": "Camiseta",
+    "description": "Camiseta de algodón",
+    "code": "CAM001",
+    "price": 1500,
+    "stock": 20,
+    "category": "Ropa",
+    "thumbnails": [
+      "img1.jpg",
+      "img2.jpg"
+    ]
+  }
+]

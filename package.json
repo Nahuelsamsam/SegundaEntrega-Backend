@@ -1,0 +1,32 @@
+{
+  "name": "primeraentrega",
+  "version": "1.0.0",
+  "description": "Primera entrega backend con Express, Products y Carts",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nahuelsamsam/PrimeraEntrega-Backend.git"
+  },
+  "keywords": [
+    "express",
+    "backend",
+    "coderhouse"
+  ],
+  "author": "Nahuel Sam Sam",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nahuelsamsam/PrimeraEntrega-Backend/issues"
+  },
+  "homepage": "https://github.com/Nahuelsamsam/PrimeraEntrega-Backend#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

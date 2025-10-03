@@ -1,64 +1,91 @@
 import { Router } from "express";
-import ProductManager from "../managers/ProductManager.js";
+import Product from "../dao/models/Product.model.js";
 
 const router = Router();
-const productManager = new ProductManager("./src/data/products.json");
 
-// GET / - lista todos los productos
 router.get("/", async (req, res) => {
-  const products = await productManager.getProducts();
-  res.json(products);
-});
+  try {
+    let { limit = 10, page = 1, sort, query } = req.query;
 
-// GET /:pid - obtener producto por id
-router.get("/:pid", async (req, res) => {
-  const pid = Number(req.params.pid);
-  if (isNaN(pid)) return res.status(400).json({ error: "ID inválido" });
+    limit = Math.max(parseInt(limit) || 10, 1);
+    page = Math.max(parseInt(page) || 1, 1);
 
-  const product = await productManager.getProductById(pid);
-  if (!product) return res.status(404).json({ error: "Producto no encontrado" });
-  res.json(product);
-});
+    const filter = {};
+    if (query) {
+      const parts = query.split(":");
+      if (parts.length === 2) {
+        const [field, value] = parts;
+        if (field === "category") filter.category = value;
+        else if (field === "status") filter.status = (value === "true" || value === "1");
+        else filter[field] = value;
+      } else {
+        filter.$or = [
+          { title: { $regex: query, $options: "i" } },
+          { category: { $regex: query, $options: "i" } }
+        ];
+      }
+    }
 
-// POST / - agregar un producto nuevo
-router.post("/", async (req, res) => {
-  const { title, description, code, price, stock, category, thumbnails, status } = req.body;
+    const options = { page, limit, lean: true };
+    if (sort === "asc") options.sort = { price: 1 };
+    else if (sort === "desc") options.sort = { price: -1 };
 
-  if (!title || !description || !code || !price || !stock || !category) {
-    return res.status(400).json({ error: "Todos los campos son obligatorios" });
+    const result = await Product.paginate(filter, options);
+
+    const buildLink = (targetPage) => {
+      const qp = { ...req.query, page: targetPage };
+      const base = `${req.protocol}://${req.get("host")}${req.baseUrl}${req.path}`;
+      return `${base}?${new URLSearchParams(qp).toString()}`;
+    };
+
+    const responsePayload = {
+      status: "success",
+      payload: result.docs,
+      totalPages: result.totalPages,
+      prevPage: result.prevPage,
+      nextPage: result.nextPage,
+      page: result.page,
+      hasPrevPage: result.hasPrevPage,
+      hasNextPage: result.hasNextPage,
+      prevLink: result.hasPrevPage ? buildLink(result.prevPage) : null,
+      nextLink: result.hasNextPage ? buildLink(result.nextPage) : null
+    };
+
+    const wantsJson =
+      req.accepts("json") === "json" || req.query.format === "json" || req.query.api === "true";
+
+    if (wantsJson) {
+      return res.json(responsePayload);
+    } else {
+      return res.render("products", {
+        products: result.docs,
+        hasPrevPage: result.hasPrevPage,
+        hasNextPage: result.hasNextPage,
+        prevPage: result.prevPage,
+        nextPage: result.nextPage,
+        page: result.page,
+        totalPages: result.totalPages,
+        prevLink: responsePayload.prevLink,
+        nextLink: responsePayload.nextLink,
+        currentQuery: req.query
+      });
+    }
+  } catch (err) {
+    console.error("GET /products error:", err);
+    return res.status(500).send("Error interno del servidor");
   }
-
-  const newProduct = await productManager.addProduct({
-    title,
-    description,
-    code,
-    price,
-    stock,
-    category,
-    thumbnails: thumbnails || [],
-    status: status !== undefined ? status : true   // 👈 si no mandás nada, queda en true
-  });
-
-  res.status(201).json(newProduct);
 });
 
-// PUT /:pid - actualizar producto
-router.put("/:pid", async (req, res) => {
-  const pid = Number(req.params.pid);
-  if (isNaN(pid)) return res.status(400).json({ error: "ID inválido" });
+router.get("/:pid", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.pid).lean();
+    if (!product) return res.status(404).send("Producto no encontrado");
 
-  const updatedProduct = await productManager.updateProduct(pid, req.body);
-  if (!updatedProduct) return res.status(404).json({ error: "Producto no encontrado" });
-  res.json(updatedProduct);
-});
-
-// DELETE /:pid - eliminar producto
-router.delete("/:pid", async (req, res) => {
-  const pid = Number(req.params.pid);
-  if (isNaN(pid)) return res.status(400).json({ error: "ID inválido" });
-
-  await productManager.deleteProduct(pid);
-  res.json({ message: "Producto eliminado" });
+    return res.render("productDetail", { product });
+  } catch (err) {
+    console.error("GET /products/:pid error:", err);
+    return res.status(500).send("Error interno del servidor");
+  }
 });
 
 export default router;

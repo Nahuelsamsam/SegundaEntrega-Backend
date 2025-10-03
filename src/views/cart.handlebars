@@ -1,0 +1,19 @@
+<h1>🛒 Tu carrito</h1>
+
+{{#if cart.products.length}}
+  <ul class="list-group">
+    {{#each cart.products}}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{this.product.title}}</strong>  
+          (x{{this.quantity}}) - ${{this.product.price}}
+        </div>
+        <form method="POST" action="/api/carts/{{../cart._id}}/products/{{this.product._id}}?_method=DELETE">
+          <button class="btn btn-danger btn-sm">Eliminar</button>
+        </form>
+      </li>
+    {{/each}}
+  </ul>
+{{else}}
+  <p>Tu carrito está vacío 🛍️</p>
+{{/if}}

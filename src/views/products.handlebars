@@ -1,0 +1,59 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Productos Materos</h1>
+  <form class="d-flex" method="GET" action="/products">
+   <select class="form-select me-2" name="sort">
+      <option value="">Orden</option>
+      <option value="asc" {{#if (eq currentQuery.sort "asc")}}selected{{/if}}>Precio ↑</option>
+      <option value="desc" {{#if (eq currentQuery.sort "desc")}}selected{{/if}}>Precio ↓</option>
+    </select>
+    <input class="form-control me-2" name="limit" type="number" min="1" placeholder="limit" value="{{currentQuery.limit}}">
+    <button class="btn btn-primary" type="submit">Aplicar</button>
+  </form>
+</div>
+
+<div class="row g-3">
+  {{#each products}}
+    <div class="col-md-4">
+      <div class="card product-card h-100">
+        {{#if this.thumbnails.[0]}}
+          <img src="{{this.thumbnails.[0]}}" class="card-img-top" alt="{{this.title}}" style="height:180px;object-fit:cover;">
+        {{/if}}
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">{{this.title}}</h5>
+          <p class="card-text text-truncate">{{this.description}}</p>
+          <div class="mt-auto">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="price">${{this.price}}</div>
+              <div>
+                <a href="/products/{{this._id}}" class="btn btn-sm btn-outline-primary">Ver</a>
+                <!-- 👇 acá ahora usamos el carrito dinámico -->
+                <form class="d-inline" method="POST" action="/api/carts/{{../defaultCartId}}/products/{{this._id}}">
+                  <button class="btn btn-sm btn-success">Agregar</button>
+                </form>
+              </div>
+            </div>
+            <small class="text-muted">Categoría: {{this.category}} • Stock: {{this.stock}}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/each}}
+</div>
+
+<nav aria-label="Paginacion" class="mt-4">
+  <ul class="pagination justify-content-center">
+    {{#if hasPrevPage}}
+      <li class="page-item">
+        <a class="page-link" href="{{prevLink}}">⬅️ Anterior</a>
+      </li>
+    {{/if}}
+
+    <li class="page-item disabled"><span class="page-link">Página {{page}} de {{totalPages}}</span></li>
+
+    {{#if hasNextPage}}
+      <li class="page-item">
+        <a class="page-link" href="{{nextLink}}">Siguiente ➡️</a>
+      </li>
+    {{/if}}
+  </ul>
+</nav>
